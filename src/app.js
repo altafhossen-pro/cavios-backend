@@ -19,7 +19,8 @@ const allowedOrigins = [
     'http://72.61.237.220:3000',
     'http://forpink.com',
     'https://forpink.com',
-    'http://72.61.237.220:3000'
+    'http://72.61.237.220:3000',
+    'http://72.61.237.220:8000'
 ];
 
 app.use((req, res, next) => {
@@ -50,6 +51,7 @@ app.use(cors({
         'http://forpink.com',
         'https://forpink.com',
         'http://72.61.237.220:3000',
+        'http://72.61.237.220:8000'
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
