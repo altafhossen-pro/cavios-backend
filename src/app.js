@@ -16,10 +16,10 @@ const allowedOrigins = [
     'http://localhost:3001',
     'http://localhost:5173', // Vite dev server (Dashboard)
     'http://127.0.0.1:3000',
-    'http://64.227.133.212',
+    'http://72.61.237.220:3000',
     'http://forpink.com',
     'https://forpink.com',
-    'http://64.227.133.212:3000'
+    'http://72.61.237.220:3000'
 ];
 
 app.use((req, res, next) => {
@@ -49,7 +49,7 @@ app.use(cors({
         'http://64.227.133.212',
         'http://forpink.com',
         'https://forpink.com',
-        'http://64.227.133.212:3000',
+        'http://72.61.237.220:3000',
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -71,9 +71,9 @@ app.use('/api/v1', routes);
 app.get('/', (req, res) => {
     return res.status(200).json({
         success: true,
-        message: 'Welcome to Forpink Server',
+        message: 'Welcome to Cavios Server',
         version: '1.0.0',
-        author: 'Forpink',
+        author: 'Cavios',
         ip: req.ip,
         port: process.env.PORT,
         timestamp: new Date().toISOString(),
