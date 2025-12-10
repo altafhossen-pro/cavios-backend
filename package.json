@@ -13,6 +13,8 @@
     "seed:products:reset": "node scripts/seedProducts.js --reset",
     "seed:products:count": "node scripts/seedProducts.js --count",
     "init:roles": "node src/scripts/initRoles.js",
+    "seed:superadmin": "node src/scripts/seedSuperAdmin.js",
+    "init:all": "node src/scripts/initRoles.js && node src/scripts/seedSuperAdmin.js",
     "clean:manage": "node src/scripts/removeManagePermissions.js",
     "clean:cancel": "node src/scripts/removeOrderCancelPermission.js",
     "test:api": "node scripts/testAPI.js"

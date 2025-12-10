@@ -12,7 +12,7 @@ const seedData = async () => {
     console.log('🚀 Starting permission data seeding...\n');
 
     // Connect to database
-    const dbUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/gold-ecommerce';
+    const dbUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/cavios-backend';
     await mongoose.connect(dbUri);
     console.log('✅ Connected to database\n');
 
