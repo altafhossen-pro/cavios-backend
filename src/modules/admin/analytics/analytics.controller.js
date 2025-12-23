@@ -624,6 +624,406 @@ exports.getDashboardStats = async (req, res) => {
   }
 };
 
+// Get sales dashboard data with date range support
+exports.getSalesDashboardStats = async (req, res) => {
+  try {
+    const { period, startDate: customStartDate, endDate: customEndDate } = req.query;
+    
+    // Calculate date range based on period or custom dates
+    const now = new Date();
+    let startDate;
+    let endDate;
+    
+    if (customStartDate && customEndDate) {
+      // Custom date range
+      startDate = new Date(customStartDate);
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date(customEndDate);
+      endDate.setHours(23, 59, 59, 999);
+    } else {
+      // Period-based
+      switch (period) {
+        case 'today':
+          startDate = new Date(now);
+          startDate.setHours(0, 0, 0, 0);
+          endDate = new Date(now);
+          endDate.setHours(23, 59, 59, 999);
+          break;
+        case 'yesterday':
+          startDate = new Date(now);
+          startDate.setDate(startDate.getDate() - 1);
+          startDate.setHours(0, 0, 0, 0);
+          endDate = new Date(now);
+          endDate.setDate(endDate.getDate() - 1);
+          endDate.setHours(23, 59, 59, 999);
+          break;
+        case '7d':
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          startDate.setHours(0, 0, 0, 0);
+          endDate = null;
+          break;
+        case '30d':
+          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          startDate.setHours(0, 0, 0, 0);
+          endDate = null;
+          break;
+        case '90d':
+          startDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+          startDate.setHours(0, 0, 0, 0);
+          endDate = null;
+          break;
+        case '1y':
+          startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+          startDate.setHours(0, 0, 0, 0);
+          endDate = null;
+          break;
+        default:
+          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          startDate.setHours(0, 0, 0, 0);
+          endDate = null;
+      }
+    }
+
+    // Period-based order statistics (excluding deleted)
+    const periodOrdersQuery = { 
+      createdAt: endDate ? { $gte: startDate, $lte: endDate } : { $gte: startDate },
+      isDeleted: false
+    };
+    const periodOrders = await Order.countDocuments(periodOrdersQuery);
+    
+    // Calculate period sales (using same logic as getDashboardStats)
+    const periodSalesMatch = {
+      $or: [
+        { paymentMethod: 'cod', status: { $in: ['delivered', 'returned'] } },
+        { 
+          paymentMethod: { $ne: 'cod' },
+          paymentStatus: 'paid',
+          status: { $in: ['confirmed', 'returned'] }
+        }
+      ],
+      isDeleted: false
+    };
+    
+    const periodSalesAgg = await Order.aggregate([
+      { $match: periodSalesMatch },
+      {
+        $addFields: {
+          relevantDate: {
+            $cond: {
+              if: { $eq: ["$paymentMethod", "cod"] },
+              then: { $ifNull: ["$statusTimestamps.delivered", "$createdAt"] },
+              else: "$createdAt"
+            }
+          }
+        }
+      },
+      {
+        $match: endDate 
+          ? { relevantDate: { $ne: null, $gte: startDate, $lte: endDate } }
+          : { relevantDate: { $ne: null, $gte: startDate } }
+      },
+      {
+        $project: {
+          items: 1,
+          returnQuantities: 1,
+          subtotal: {
+            $let: {
+              vars: {
+                totalValue: {
+                  $reduce: {
+                    input: "$items",
+                    initialValue: 0,
+                    in: { $add: ["$$value", { $multiply: ["$$this.price", "$$this.quantity"] }] }
+                  }
+                },
+                returnedValue: {
+                  $cond: {
+                    if: { $and: [{ $ne: ["$returnQuantities", null] }, { $gt: [{ $size: { $ifNull: ["$returnQuantities", []] } }, 0] }] },
+                    then: {
+                      $reduce: {
+                        input: "$returnQuantities",
+                        initialValue: 0,
+                        in: {
+                          $add: [
+                            "$$value",
+                            {
+                              $multiply: [
+                                { $arrayElemAt: ["$items.price", "$$this.itemIndex"] },
+                                "$$this.quantity"
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    else: 0
+                  }
+                }
+              },
+              in: { $subtract: ["$$totalValue", "$$returnedValue"] }
+            }
+          }
+        }
+      },
+      { $group: { _id: null, total: { $sum: '$subtotal' } } }
+    ]);
+    const periodSales = periodSalesAgg[0]?.total || 0;
+
+    // Previous period for comparison
+    const periodDuration = endDate 
+      ? (endDate.getTime() - startDate.getTime()) 
+      : (now.getTime() - startDate.getTime());
+    const previousStartDate = new Date(startDate.getTime() - periodDuration);
+    const previousEndDate = startDate;
+    
+    const previousSalesAgg = await Order.aggregate([
+      { $match: periodSalesMatch },
+      {
+        $addFields: {
+          relevantDate: {
+            $cond: {
+              if: { $eq: ["$paymentMethod", "cod"] },
+              then: { $ifNull: ["$statusTimestamps.delivered", "$createdAt"] },
+              else: "$createdAt"
+            }
+          }
+        }
+      },
+      {
+        $match: {
+          relevantDate: { $ne: null, $gte: previousStartDate, $lt: previousEndDate }
+        }
+      },
+      {
+        $project: {
+          items: 1,
+          returnQuantities: 1,
+          subtotal: {
+            $let: {
+              vars: {
+                totalValue: {
+                  $reduce: {
+                    input: "$items",
+                    initialValue: 0,
+                    in: { $add: ["$$value", { $multiply: ["$$this.price", "$$this.quantity"] }] }
+                  }
+                },
+                returnedValue: {
+                  $cond: {
+                    if: { $and: [{ $ne: ["$returnQuantities", null] }, { $gt: [{ $size: { $ifNull: ["$returnQuantities", []] } }, 0] }] },
+                    then: {
+                      $reduce: {
+                        input: "$returnQuantities",
+                        initialValue: 0,
+                        in: {
+                          $add: [
+                            "$$value",
+                            {
+                              $multiply: [
+                                { $arrayElemAt: ["$items.price", "$$this.itemIndex"] },
+                                "$$this.quantity"
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    else: 0
+                  }
+                }
+              },
+              in: { $subtract: ["$$totalValue", "$$returnedValue"] }
+            }
+          }
+        }
+      },
+      { $group: { _id: null, total: { $sum: '$subtotal' } } }
+    ]);
+    const previousSales = previousSalesAgg[0]?.total || 0;
+    
+    // Calculate growth percentage
+    const salesGrowth = previousSales > 0 ? 
+      ((periodSales - previousSales) / previousSales * 100).toFixed(1) : 0;
+
+    // Sales chart data (daily breakdown for the period)
+    const chartData = await Order.aggregate([
+      { $match: periodSalesMatch },
+      {
+        $addFields: {
+          relevantDate: {
+            $cond: {
+              if: { $eq: ["$paymentMethod", "cod"] },
+              then: { $ifNull: ["$statusTimestamps.delivered", "$createdAt"] },
+              else: "$createdAt"
+            }
+          }
+        }
+      },
+      {
+        $match: endDate 
+          ? { relevantDate: { $ne: null, $gte: startDate, $lte: endDate } }
+          : { relevantDate: { $ne: null, $gte: startDate } }
+      },
+      {
+        $project: {
+          relevantDate: 1,
+          total: 1,
+          items: 1,
+          returnQuantities: 1,
+          subtotal: {
+            $let: {
+              vars: {
+                totalValue: {
+                  $reduce: {
+                    input: "$items",
+                    initialValue: 0,
+                    in: { $add: ["$$value", { $multiply: ["$$this.price", "$$this.quantity"] }] }
+                  }
+                },
+                returnedValue: {
+                  $cond: {
+                    if: { $and: [{ $ne: ["$returnQuantities", null] }, { $gt: [{ $size: { $ifNull: ["$returnQuantities", []] } }, 0] }] },
+                    then: {
+                      $reduce: {
+                        input: "$returnQuantities",
+                        initialValue: 0,
+                        in: {
+                          $add: [
+                            "$$value",
+                            {
+                              $multiply: [
+                                { $arrayElemAt: ["$items.price", "$$this.itemIndex"] },
+                                "$$this.quantity"
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    else: 0
+                  }
+                }
+              },
+              in: { $subtract: ["$$totalValue", "$$returnedValue"] }
+            }
+          }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$relevantDate' },
+            month: { $month: '$relevantDate' },
+            day: { $dayOfMonth: '$relevantDate' }
+          },
+          revenue: { $sum: '$subtotal' },
+          orders: { $sum: 1 }
+        }
+      },
+      { $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1 } }
+    ]);
+
+    // Sales by category - combine both match conditions
+    const categorySalesMatch = {
+      $or: periodSalesMatch.$or,
+      isDeleted: false,
+      createdAt: periodOrdersQuery.createdAt
+    };
+    
+    const categorySales = await Order.aggregate([
+      { $match: categorySalesMatch },
+      { $unwind: '$items' },
+      {
+        $lookup: {
+          from: 'products',
+          localField: 'items.product',
+          foreignField: '_id',
+          as: 'productInfo'
+        }
+      },
+      { $unwind: '$productInfo' },
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'productInfo.category',
+          foreignField: '_id',
+          as: 'categoryInfo'
+        }
+      },
+      { $unwind: { path: '$categoryInfo', preserveNullAndEmptyArrays: true } },
+      {
+        $group: {
+          _id: '$categoryInfo._id',
+          categoryName: { $first: '$categoryInfo.name' },
+          totalRevenue: { $sum: { $multiply: ['$items.price', '$items.quantity'] } },
+          totalOrders: { $sum: 1 }
+        }
+      },
+      { $sort: { totalRevenue: -1 } },
+      { $limit: 10 }
+    ]);
+
+    // Recent orders
+    const recentOrders = await Order.find(periodOrdersQuery)
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .populate('user', 'name email phone')
+      .select('orderId user total status paymentStatus paymentMethod createdAt items');
+
+    // Recent transactions (from orders)
+    const recentTransactions = await Order.find(periodOrdersQuery)
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .select('orderId createdAt total paymentStatus paymentMethod')
+      .lean();
+
+    const transactions = recentTransactions.map((order, index) => ({
+      id: order.orderId || `#${index + 1}`,
+      date: order.createdAt,
+      amount: order.total.toFixed(2),
+      status: order.paymentStatus === 'paid' ? 'Cr' : 'Dr',
+      description: order.paymentMethod ? `${order.paymentMethod.toUpperCase()} Payment` : 'Order Payment'
+    }));
+
+    // Recent users (new accounts)
+    const recentUsers = await User.find({
+      createdAt: endDate ? { $gte: startDate, $lte: endDate } : { $gte: startDate }
+    })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .select('_id name email phone createdAt')
+      .lean();
+
+    return sendResponse({
+      res,
+      statusCode: 200,
+      success: true,
+      message: 'Sales dashboard stats fetched successfully',
+      data: {
+        stats: {
+          totalSales: parseFloat(periodSales.toFixed(2)),
+          totalOrders: periodOrders,
+          salesGrowth: parseFloat(salesGrowth),
+          profit: parseFloat(periodSales.toFixed(2)) // Using sales as profit since no expense data
+        },
+        chartData,
+        categorySales,
+        recentOrders,
+        transactions,
+        recentUsers
+      }
+    });
+  } catch (error) {
+    console.error('Sales dashboard stats error:', error);
+    return sendResponse({
+      res,
+      statusCode: 500,
+      success: false,
+      message: error.message || 'Failed to fetch sales dashboard stats'
+    });
+  }
+};
+
 // Get sales analytics with date range
 exports.getSalesAnalytics = async (req, res) => {
   try {

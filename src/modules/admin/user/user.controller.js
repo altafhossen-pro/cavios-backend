@@ -296,11 +296,69 @@ exports.deleteUser = async (req, res) => {
 
 exports.createUser = async (req, res) => {
   try {
-    const user = new User(req.body);
+    const { name, email, password, phone, address, roleId, role, status } = req.body;
+    
+    // Validate required fields
+    if (!name || !email || !password) {
+      return sendResponse({
+        res,
+        statusCode: 400,
+        success: false,
+        message: 'Name, email, and password are required',
+      });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
+      return sendResponse({
+        res,
+        statusCode: 409,
+        success: false,
+        message: 'User with this email already exists',
+      });
+    }
+
+    // Hash password
+    const bcrypt = require('bcryptjs');
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user
+    const userData = {
+      name,
+      email: email.toLowerCase(),
+      password: hashedPassword,
+      role: role || 'admin',
+      status: status || 'active',
+      registerType: 'email',
+      emailVerified: true,
+    };
+
+    if (phone) userData.phone = phone;
+    if (address) userData.address = address;
+    if (roleId) userData.roleId = roleId;
+
+    const user = new User(userData);
     await user.save();
-    return sendResponse({ res, statusCode: 201, success: true, message: 'User created', data: user });
+
+    // Remove password from response
+    const userObj = user.toObject();
+    delete userObj.password;
+
+    return sendResponse({
+      res,
+      statusCode: 201,
+      success: true,
+      message: 'User created successfully',
+      data: userObj,
+    });
   } catch (error) {
-    return sendResponse({ res, statusCode: 500, success: false, message: error.message });
+    return sendResponse({
+      res,
+      statusCode: 500,
+      success: false,
+      message: error.message || 'Server error',
+    });
   }
 };
 

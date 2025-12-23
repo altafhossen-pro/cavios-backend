@@ -26,6 +26,11 @@ const addressRoutes = require('../modules/address/address.route');
 const adsRoutes = require('../modules/ads/ads.route');
 const roleRoutes = require('../modules/role/role.route');
 const affiliateRoutes = require('../modules/affiliate/affiliate.route');
+const bannerCollectionRoutes = require('../modules/bannerCollection/bannerCollection.route');
+const bannerCountdownRoutes = require('../modules/bannerCountdown/bannerCountdown.route');
+const blogRoutes = require('../modules/blog/blog.route');
+const blogCommentRoutes = require('../modules/blogComment/blogComment.route');
+const staticPageRoutes = require('../modules/staticPage/staticPage.route');
 
 router.use('/user', userRoutes);
 router.use('/otp', otpRoutes);
@@ -52,6 +57,11 @@ router.use('/address', addressRoutes);
 router.use('/ads', adsRoutes);
 router.use('/admin/role', roleRoutes);
 router.use('/affiliate', affiliateRoutes);
+router.use('/banner-collection', bannerCollectionRoutes);
+router.use('/banner-countdown', bannerCountdownRoutes);
+router.use('/blog', blogRoutes);
+router.use('/blog-comment', blogCommentRoutes);
+router.use('/static-page', staticPageRoutes);
 
 // Health check route
 router.get('/health', (req, res) => {
