@@ -47,9 +47,10 @@ app.use(cors({
         'http://localhost:3001',
         'http://localhost:5173', // Vite dev server (Dashboard)
         'http://127.0.0.1:3000',
-        'http://64.227.133.212',
-        'http://forpink.com',
-        'https://forpink.com',
+        'http://72.61.237.220:3000',
+        'http://cavios.com',
+        'https://cavios.com',
+        'https://admin.cavios.com',
         'http://72.61.237.220:3000',
         'http://72.61.237.220:8000'
     ],
