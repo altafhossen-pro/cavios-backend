@@ -701,8 +701,36 @@ exports.updateProduct = async (req, res) => {
       });
     }
 
-    // Update the product
-    const product = await Product.findByIdAndUpdate(id, updates, { new: true });
+    // Preserve stock fields - don't allow stock updates from product edit page
+    // Stock should be updated through inventory management endpoints only
+    const updatesWithoutStock = { ...updates };
+    
+    // Remove totalStock from updates if present
+    if ('totalStock' in updatesWithoutStock) {
+      delete updatesWithoutStock.totalStock;
+    }
+    
+    // Preserve stockQuantity in variants - merge with existing stock values
+    if (updatesWithoutStock.variants && Array.isArray(updatesWithoutStock.variants)) {
+      updatesWithoutStock.variants = updatesWithoutStock.variants.map((updatedVariant) => {
+        if (updatedVariant.sku) {
+          const originalVariant = originalProduct.variants.find(v => v.sku === updatedVariant.sku);
+          if (originalVariant) {
+            // Preserve existing stock fields
+            return {
+              ...updatedVariant,
+              stockQuantity: originalVariant.stockQuantity ?? 0,
+              lowStockThreshold: originalVariant.lowStockThreshold ?? updatedVariant.lowStockThreshold ?? 5,
+              stockStatus: originalVariant.stockStatus ?? updatedVariant.stockStatus ?? 'in_stock',
+            };
+          }
+        }
+        return updatedVariant;
+      });
+    }
+
+    // Update the product (without stock fields)
+    const product = await Product.findByIdAndUpdate(id, updatesWithoutStock, { new: true });
     
     // Check for stock changes and create tracking records
     const stockTrackingRecords = [];
