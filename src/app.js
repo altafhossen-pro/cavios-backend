@@ -18,6 +18,7 @@ const allowedOrigins = [
     'http://72.61.237.220:3000',
     'http://cavios.com',
     'https://cavios.com',
+    'https://www.cavios.com',
     'https://admin.cavios.com',
     'http://72.61.237.220:3000',
     'http://72.61.237.220:8000'
@@ -50,6 +51,7 @@ app.use(cors({
         'http://72.61.237.220:3000',
         'http://cavios.com',
         'https://cavios.com',
+        'https://www.cavios.com',
         'https://admin.cavios.com',
         'http://72.61.237.220:3000',
         'http://72.61.237.220:8000'
