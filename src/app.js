@@ -3,7 +3,6 @@ const cors = require('cors');
 const morgan = require('morgan');
 const path = require('path');
 const connectDB = require('./config/db');
-const expressSyncHelper = require('express-sync-helper');
 const { globalErrorHandler, notFound } = require('./utils/errorHandler');
 const dotenv = require('dotenv');
 const routes = require('./routes/index');
@@ -17,8 +16,9 @@ const allowedOrigins = [
     'http://localhost:5173', // Vite dev server (Dashboard)
     'http://127.0.0.1:3000',
     'http://72.61.237.220:3000',
-    'http://forpink.com',
-    'https://forpink.com',
+    'http://cavios.com',
+    'https://cavios.com',
+    'https://admin.cavios.com',
     'http://72.61.237.220:3000',
     'http://72.61.237.220:8000'
 ];
@@ -61,7 +61,6 @@ app.use(express.json({ limit: '10mb' }));
 app.use(morgan('dev'));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-app.use(expressSyncHelper());
 
 
 // Serve static files from uploads directory
