@@ -136,6 +136,27 @@ exports.createOrder = async (req, res) => {
       }
     }
 
+    // Store phone number from checkout form if provided (even for logged in users)
+    // This allows using the phone number entered in checkout, not just user's saved phone
+    if (orderData.manualOrderInfo && orderData.manualOrderInfo.phone) {
+      // Phone number already provided in manualOrderInfo from frontend
+      // Keep it as is - this will be used for order display and search
+    } else if (req.body.phone) {
+      // If phone is sent directly in request body (fallback)
+      if (!orderData.manualOrderInfo) {
+        orderData.manualOrderInfo = {};
+      }
+      orderData.manualOrderInfo.phone = req.body.phone;
+      if (req.body.name) {
+        orderData.manualOrderInfo.name = req.body.name;
+      }
+    }
+    
+    // Also store phone in shippingAddress if provided (for backward compatibility)
+    if (orderData.manualOrderInfo && orderData.manualOrderInfo.phone && orderData.shippingAddress) {
+      orderData.shippingAddress.phone = orderData.manualOrderInfo.phone;
+    }
+
     // Set default status to 'pending' for all orders
     orderData.status = 'pending';
     orderData.statusTimestamps = {
