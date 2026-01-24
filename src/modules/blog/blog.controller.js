@@ -7,7 +7,10 @@ const getAllBlogs = async (req, res) => {
         const { page = 1, limit = 10, isActive, sort, search } = req.query;
         
         let query = {};
-        if (isActive !== undefined) {
+        // For public endpoint, only show active blogs
+        if (req.originalUrl.includes('/public') || !req.user) {
+            query.isActive = true;
+        } else if (isActive !== undefined) {
             query.isActive = isActive === 'true';
         }
 

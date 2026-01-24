@@ -174,6 +174,14 @@ exports.getMainCategories = async (req, res) => {
               { $size: '$directProducts' },
               { $size: '$childProducts' }
             ]
+          },
+          // Filter childCategories to only include active ones
+          childCategories: {
+            $filter: {
+              input: '$childCategories',
+              as: 'child',
+              cond: { $eq: ['$$child.isActive', true] }
+            }
           }
         }
       },
@@ -187,6 +195,13 @@ exports.getMainCategories = async (req, res) => {
           isFeatured: 1,
           sortOrder: 1,
           productCount: 1,
+          childCategories: {
+            name: 1,
+            slug: 1,
+            image: 1,
+            isActive: 1,
+            sortOrder: 1
+          },
           createdAt: 1,
           updatedAt: 1
         }

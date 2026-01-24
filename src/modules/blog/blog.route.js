@@ -16,6 +16,7 @@ const verifyTokenAdmin = require('../../middlewares/verifyTokenAdmin');
 
 // Public routes
 router.get('/latest', getLatestBlogs);
+router.get('/public', getAllBlogs); // Public route for getting all blogs with pagination
 router.get('/slug/:slug', getBlogBySlug);
 router.get('/check-slug', checkSlugAvailability); // Public route for slug validation
 
