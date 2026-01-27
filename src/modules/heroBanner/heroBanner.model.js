@@ -1,44 +1,67 @@
 const mongoose = require('mongoose');
 
 const heroBannerSchema = new mongoose.Schema({
-  title: {
+  // Frontend fields
+  imgSrc: {
     type: String,
     required: true,
+    trim: true
+  },
+  alt: {
+    type: String,
+    default: 'hero-slideshow',
+    trim: true
+  },
+  subheading: {
+    type: String,
+    trim: true
+  },
+  heading: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  btnText: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  buttonLink: {
+    type: String,
+    default: '/shop-default-grid',
+    trim: true
+  },
+  // Legacy fields (for backward compatibility)
+  title: {
+    type: String,
     trim: true
   },
   description: {
     type: String,
-    required: true,
     trim: true
   },
   modelImage: {
     type: String,
-    required: true,
     trim: true
   },
   backgroundGradient: {
     type: String,
-    required: true,
     trim: true
   },
   button1Text: {
     type: String,
-    required: true,
     trim: true
   },
   button1Link: {
     type: String,
-    required: true,
     trim: true
   },
   button2Text: {
     type: String,
-    required: true,
     trim: true
   },
   button2Link: {
     type: String,
-    required: true,
     trim: true
   },
   isActive: {

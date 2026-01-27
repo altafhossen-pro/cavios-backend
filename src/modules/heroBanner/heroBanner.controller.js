@@ -54,17 +54,29 @@ exports.getAllHeroBanners = async (req, res) => {
 // Admin: Create hero banner
 exports.createHeroBanner = async (req, res) => {
   try {
-    const { title, description, modelImage, backgroundGradient, button1Text, button1Link, button2Text, button2Link, isActive, order } = req.body;
+    const { 
+      imgSrc, alt, subheading, heading, btnText, buttonLink,
+      title, description, modelImage, backgroundGradient, 
+      button1Text, button1Link, button2Text, button2Link, 
+      isActive, order 
+    } = req.body;
 
     const bannerData = {
-      title,
-      description,
-      modelImage,
-      backgroundGradient,
-      button1Text,
-      button1Link,
-      button2Text,
-      button2Link,
+      imgSrc: imgSrc || modelImage,
+      alt: alt || 'hero-slideshow',
+      subheading: subheading || '',
+      heading: heading || title || '',
+      btnText: btnText || button1Text || 'Explore Collection',
+      buttonLink: buttonLink || button1Link || '/shop-default-grid',
+      // Legacy fields
+      title: title || heading || '',
+      description: description || '',
+      modelImage: modelImage || imgSrc,
+      backgroundGradient: backgroundGradient || '',
+      button1Text: button1Text || btnText || 'Explore Collection',
+      button1Link: button1Link || buttonLink || '/shop-default-grid',
+      button2Text: button2Text || '',
+      button2Link: button2Link || '',
       isActive: isActive !== false,
       order: order || 0
     };
@@ -94,20 +106,45 @@ exports.createHeroBanner = async (req, res) => {
 exports.updateHeroBanner = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, modelImage, backgroundGradient, button1Text, button1Link, button2Text, button2Link, isActive, order } = req.body;
+    const { 
+      imgSrc, alt, subheading, heading, btnText, buttonLink,
+      title, description, modelImage, backgroundGradient, 
+      button1Text, button1Link, button2Text, button2Link, 
+      isActive, order 
+    } = req.body;
 
-    const updateData = {
-      title,
-      description,
-      modelImage,
-      backgroundGradient,
-      button1Text,
-      button1Link,
-      button2Text,
-      button2Link,
-      isActive: isActive !== false,
-      order: order || 0
-    };
+    const updateData = {};
+    
+    // Update new fields if provided
+    if (imgSrc !== undefined) updateData.imgSrc = imgSrc;
+    if (alt !== undefined) updateData.alt = alt;
+    if (subheading !== undefined) updateData.subheading = subheading;
+    if (heading !== undefined) updateData.heading = heading;
+    if (btnText !== undefined) updateData.btnText = btnText;
+    if (buttonLink !== undefined) updateData.buttonLink = buttonLink;
+    
+    // Update legacy fields if provided
+    if (title !== undefined) updateData.title = title;
+    if (description !== undefined) updateData.description = description;
+    if (modelImage !== undefined) updateData.modelImage = modelImage;
+    if (backgroundGradient !== undefined) updateData.backgroundGradient = backgroundGradient;
+    if (button1Text !== undefined) updateData.button1Text = button1Text;
+    if (button1Link !== undefined) updateData.button1Link = button1Link;
+    if (button2Text !== undefined) updateData.button2Text = button2Text;
+    if (button2Link !== undefined) updateData.button2Link = button2Link;
+    
+    // Sync fields for backward compatibility
+    if (updateData.heading && !updateData.title) updateData.title = updateData.heading;
+    if (updateData.title && !updateData.heading) updateData.heading = updateData.title;
+    if (updateData.imgSrc && !updateData.modelImage) updateData.modelImage = updateData.imgSrc;
+    if (updateData.modelImage && !updateData.imgSrc) updateData.imgSrc = updateData.modelImage;
+    if (updateData.btnText && !updateData.button1Text) updateData.button1Text = updateData.btnText;
+    if (updateData.button1Text && !updateData.btnText) updateData.btnText = updateData.button1Text;
+    if (updateData.buttonLink && !updateData.button1Link) updateData.button1Link = updateData.buttonLink;
+    if (updateData.button1Link && !updateData.buttonLink) updateData.buttonLink = updateData.button1Link;
+    
+    if (isActive !== undefined) updateData.isActive = isActive;
+    if (order !== undefined) updateData.order = order;
 
     const banner = await HeroBanner.findByIdAndUpdate(
       id,
