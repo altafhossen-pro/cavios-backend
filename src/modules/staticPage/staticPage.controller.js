@@ -56,6 +56,31 @@ const getAllStaticPages = async (req, res) => {
     }
 };
 
+// Get all active static pages (public)
+const getActiveStaticPages = async (req, res) => {
+    try {
+        const pages = await StaticPage.find({ isActive: true })
+            .select('title slug pageType')
+            .sort({ createdAt: -1 });
+
+        return sendResponse({
+            res,
+            statusCode: 200,
+            success: true,
+            message: 'Active static pages retrieved successfully',
+            data: { pages }
+        });
+    } catch (error) {
+        console.error('Error fetching active static pages:', error);
+        return sendResponse({
+            res,
+            statusCode: 500,
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
 // Get single static page by slug (public)
 const getStaticPageBySlug = async (req, res) => {
     try {
@@ -319,6 +344,7 @@ const checkSlugAvailability = async (req, res) => {
 
 module.exports = {
     getAllStaticPages,
+    getActiveStaticPages,
     getStaticPageBySlug,
     getStaticPageById,
     createStaticPage,

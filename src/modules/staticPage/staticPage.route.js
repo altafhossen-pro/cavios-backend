@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const {
     getAllStaticPages,
+    getActiveStaticPages,
     getStaticPageBySlug,
     getStaticPageById,
     createStaticPage,
@@ -12,6 +13,7 @@ const {
 const verifyTokenAdmin = require('../../middlewares/verifyTokenAdmin');
 
 // Public routes
+router.get('/active', getActiveStaticPages);
 router.get('/slug/:slug', getStaticPageBySlug);
 
 // Admin routes
