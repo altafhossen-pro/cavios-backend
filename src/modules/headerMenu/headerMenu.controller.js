@@ -108,18 +108,34 @@ exports.getHeaderMenuConfig = async (req, res) => {
         }
       });
 
-      // Add manual menu items with their order
+      // Add manual menu items with their order and submenus
       const activeManualItems = (config.manualMenuItems || [])
         .filter(item => item.isActive !== false);
       
       activeManualItems.forEach(item => {
         const orderValue = typeof item.order === 'number' ? item.order : (parseInt(item.order) || 9999);
+        
+        // Filter active submenus and sort by order
+        const activeSubmenus = (item.submenus || [])
+          .filter(submenu => submenu.isActive !== false)
+          .sort((a, b) => {
+            const orderA = typeof a.order === 'number' ? a.order : (parseInt(a.order) || 9999);
+            const orderB = typeof b.order === 'number' ? b.order : (parseInt(b.order) || 9999);
+            return orderA - orderB;
+          })
+          .map(submenu => ({
+            name: submenu.name,
+            href: submenu.href,
+            target: submenu.target || '_self'
+          }));
+        
         menuItems.push({
           type: 'manual',
           name: item.name,
           href: item.href,
           target: item.target || '_self',
-          order: orderValue
+          order: orderValue,
+          submenus: activeSubmenus.length > 0 ? activeSubmenus : undefined
         });
       });
     }

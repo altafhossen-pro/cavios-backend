@@ -19,7 +19,7 @@ const headerMenuConfigSchema = new mongoose.Schema({
       required: true
     }
   }],
-  // Manual menu items for custom menu (name, URL, target)
+  // Manual menu items for custom menu (name, URL, target, submenus)
   manualMenuItems: [{
     name: {
       type: String,
@@ -43,7 +43,32 @@ const headerMenuConfigSchema = new mongoose.Schema({
     isActive: {
       type: Boolean,
       default: true
-    }
+    },
+    submenus: [{
+      name: {
+        type: String,
+        required: true,
+        trim: true
+      },
+      href: {
+        type: String,
+        required: true,
+        trim: true
+      },
+      target: {
+        type: String,
+        enum: ['_self', '_blank'],
+        default: '_self'
+      },
+      order: {
+        type: Number,
+        required: true
+      },
+      isActive: {
+        type: Boolean,
+        default: true
+      }
+    }]
   }],
   // Whether to show the Shop menu with categories dropdown (works for both default and custom)
   showShopMenu: {

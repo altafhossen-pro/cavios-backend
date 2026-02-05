@@ -1,4 +1,5 @@
 const { FooterConfig } = require('./footer.model');
+const { StaticPage } = require('../staticPage/staticPage.model');
 const sendResponse = require('../../utils/sendResponse');
 
 // Get footer configuration (public endpoint)
@@ -8,29 +9,52 @@ exports.getFooterConfig = async (req, res) => {
 
     if (!config) {
       // Create default config if none exists
+      const currentYear = new Date().getFullYear();
       config = new FooterConfig({
         dynamicColumns: [],
-        supportColumn: {
-          heading: 'SUPPORT',
-          items: [],
-          isActive: true
-        },
-        companyInfoColumn: {
-          heading: 'COMPANY INFO',
-          items: [],
-          isActive: true
-        },
-        followUsColumn: {
-          heading: 'FOLLOW US',
-          socialLinks: [],
-          isActive: true
+        bottomSection: {
+          privacyPolicy: {
+            label: 'Privacy Policy',
+            href: '',
+            autoDetect: true
+          },
+          termsAndConditions: {
+            label: 'Terms & Conditions',
+            href: '',
+            autoDetect: true
+          },
+          copyright: `© Cavios® ${currentYear}. Designed for performance. Built to last.`
         }
       });
       await config.save();
     }
 
-    // Sort dynamic columns by order
-    const sortedDynamicColumns = config.dynamicColumns
+    // Auto-detect Privacy Policy and Terms & Conditions if autoDetect is enabled
+    let privacyPolicyUrl = config.bottomSection?.privacyPolicy?.href || '';
+    let termsAndConditionsUrl = config.bottomSection?.termsAndConditions?.href || '';
+
+    if (config.bottomSection?.privacyPolicy?.autoDetect) {
+      const privacyPage = await StaticPage.findOne({ 
+        pageType: 'privacy-policy',
+        isActive: true 
+      });
+      if (privacyPage) {
+        privacyPolicyUrl = `/page/${privacyPage.slug}`;
+      }
+    }
+
+    if (config.bottomSection?.termsAndConditions?.autoDetect) {
+      const termsPage = await StaticPage.findOne({ 
+        pageType: 'terms-conditions',
+        isActive: true 
+      });
+      if (termsPage) {
+        termsAndConditionsUrl = `/page/${termsPage.slug}`;
+      }
+    }
+
+    // Sort dynamic columns by order (up to 6 columns)
+    const sortedDynamicColumns = (config.dynamicColumns || [])
       .filter(col => col.isActive)
       .map(col => ({
         heading: col.heading,
@@ -39,22 +63,8 @@ exports.getFooterConfig = async (req, res) => {
           .sort((a, b) => a.order - b.order),
         order: col.order
       }))
-      .sort((a, b) => a.order - b.order);
-
-    // Sort support column items
-    const sortedSupportItems = config.supportColumn.items
-      .filter(item => item.isActive)
-      .sort((a, b) => a.order - b.order);
-
-    // Sort company info column items
-    const sortedCompanyInfoItems = config.companyInfoColumn.items
-      .filter(item => item.isActive)
-      .sort((a, b) => a.order - b.order);
-
-    // Sort follow us social links
-    const sortedSocialLinks = config.followUsColumn.socialLinks
-      .filter(link => link.isActive)
-      .sort((a, b) => a.order - b.order);
+      .sort((a, b) => a.order - b.order)
+      .slice(0, 6); // Limit to 6 columns
 
     return sendResponse({
       res,
@@ -63,20 +73,16 @@ exports.getFooterConfig = async (req, res) => {
       message: 'Footer configuration retrieved successfully',
       data: {
         dynamicColumns: sortedDynamicColumns,
-        supportColumn: {
-          heading: config.supportColumn.heading,
-          items: sortedSupportItems,
-          isActive: config.supportColumn.isActive
-        },
-        companyInfoColumn: {
-          heading: config.companyInfoColumn.heading,
-          items: sortedCompanyInfoItems,
-          isActive: config.companyInfoColumn.isActive
-        },
-        followUsColumn: {
-          heading: config.followUsColumn.heading,
-          socialLinks: sortedSocialLinks,
-          isActive: config.followUsColumn.isActive
+        bottomSection: {
+          privacyPolicy: {
+            label: config.bottomSection?.privacyPolicy?.label || 'Privacy Policy',
+            href: privacyPolicyUrl || config.bottomSection?.privacyPolicy?.href || ''
+          },
+          termsAndConditions: {
+            label: config.bottomSection?.termsAndConditions?.label || 'Terms & Conditions',
+            href: termsAndConditionsUrl || config.bottomSection?.termsAndConditions?.href || ''
+          },
+          copyright: (config.bottomSection?.copyright || `© Cavios® ${new Date().getFullYear()}. Designed for performance. Built to last.`).replace('{year}', new Date().getFullYear().toString())
         }
       }
     });
@@ -97,25 +103,44 @@ exports.getFooterConfigAdmin = async (req, res) => {
     let config = await FooterConfig.findOne();
 
     if (!config) {
+      const currentYear = new Date().getFullYear();
       config = new FooterConfig({
         dynamicColumns: [],
-        supportColumn: {
-          heading: 'SUPPORT',
-          items: [],
-          isActive: true
-        },
-        companyInfoColumn: {
-          heading: 'COMPANY INFO',
-          items: [],
-          isActive: true
-        },
-        followUsColumn: {
-          heading: 'FOLLOW US',
-          socialLinks: [],
-          isActive: true
+        bottomSection: {
+          privacyPolicy: {
+            label: 'Privacy Policy',
+            href: '',
+            autoDetect: true
+          },
+          termsAndConditions: {
+            label: 'Terms & Conditions',
+            href: '',
+            autoDetect: true
+          },
+          copyright: `© Cavios® ${currentYear}. Designed for performance. Built to last.`
         }
       });
       await config.save();
+    }
+
+    // Check for existing static pages by pageType and suggest URLs
+    const privacyPage = await StaticPage.findOne({ 
+      pageType: 'privacy-policy',
+      isActive: true 
+    });
+    const termsPage = await StaticPage.findOne({ 
+      pageType: 'terms-conditions',
+      isActive: true 
+    });
+
+    const configData = config.toObject();
+    
+    // Add suggested URLs if auto-detect is enabled and pages exist
+    if (configData.bottomSection?.privacyPolicy?.autoDetect && privacyPage) {
+      configData.bottomSection.privacyPolicy.suggestedUrl = `/page/${privacyPage.slug}`;
+    }
+    if (configData.bottomSection?.termsAndConditions?.autoDetect && termsPage) {
+      configData.bottomSection.termsAndConditions.suggestedUrl = `/page/${termsPage.slug}`;
     }
 
     return sendResponse({
@@ -123,7 +148,7 @@ exports.getFooterConfigAdmin = async (req, res) => {
       statusCode: 200,
       success: true,
       message: 'Footer configuration retrieved successfully',
-      data: config
+      data: configData
     });
   } catch (error) {
     console.error('Error fetching footer config:', error);
@@ -139,41 +164,35 @@ exports.getFooterConfigAdmin = async (req, res) => {
 // Update footer configuration (admin only)
 exports.updateFooterConfig = async (req, res) => {
   try {
-    const { dynamicColumns, supportColumn, companyInfoColumn, followUsColumn } = req.body;
+    const { dynamicColumns, bottomSection } = req.body;
 
     let config = await FooterConfig.findOne();
 
     if (!config) {
+      const currentYear = new Date().getFullYear();
       config = new FooterConfig({
         dynamicColumns: dynamicColumns || [],
-        supportColumn: supportColumn || {
-          heading: 'SUPPORT',
-          items: [],
-          isActive: true
-        },
-        companyInfoColumn: companyInfoColumn || {
-          heading: 'COMPANY INFO',
-          items: [],
-          isActive: true
-        },
-        followUsColumn: followUsColumn || {
-          heading: 'FOLLOW US',
-          socialLinks: [],
-          isActive: true
+        bottomSection: bottomSection || {
+          privacyPolicy: {
+            label: 'Privacy Policy',
+            href: '',
+            autoDetect: true
+          },
+          termsAndConditions: {
+            label: 'Terms & Conditions',
+            href: '',
+            autoDetect: true
+          },
+          copyright: `© Cavios® ${currentYear}. Designed for performance. Built to last.`
         }
       });
     } else {
       if (dynamicColumns !== undefined) {
-        config.dynamicColumns = dynamicColumns;
+        // Limit to 6 columns
+        config.dynamicColumns = (dynamicColumns || []).slice(0, 6);
       }
-      if (supportColumn !== undefined) {
-        config.supportColumn = supportColumn;
-      }
-      if (companyInfoColumn !== undefined) {
-        config.companyInfoColumn = companyInfoColumn;
-      }
-      if (followUsColumn !== undefined) {
-        config.followUsColumn = followUsColumn;
+      if (bottomSection !== undefined) {
+        config.bottomSection = bottomSection;
       }
     }
 
