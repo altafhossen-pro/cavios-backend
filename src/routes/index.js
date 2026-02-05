@@ -31,6 +31,8 @@ const bannerCountdownRoutes = require('../modules/bannerCountdown/bannerCountdow
 const blogRoutes = require('../modules/blog/blog.route');
 const blogCommentRoutes = require('../modules/blogComment/blogComment.route');
 const staticPageRoutes = require('../modules/staticPage/staticPage.route');
+const headerMenuRoutes = require('../modules/headerMenu/headerMenu.route');
+const footerRoutes = require('../modules/footer/footer.route');
 
 router.use('/user', userRoutes);
 router.use('/otp', otpRoutes);
@@ -62,6 +64,8 @@ router.use('/banner-countdown', bannerCountdownRoutes);
 router.use('/blog', blogRoutes);
 router.use('/blog-comment', blogCommentRoutes);
 router.use('/static-page', staticPageRoutes);
+router.use('/header-menu', headerMenuRoutes);
+router.use('/footer', footerRoutes);
 
 // Health check route
 router.get('/health', (req, res) => {

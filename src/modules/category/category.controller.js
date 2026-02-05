@@ -53,7 +53,14 @@ const getPaginatedCategories = async (filter, req, res, message) => {
     // Additional filters from query
     const queryFilter = { ...filter };
     if (req.query.isActive) queryFilter.isActive = req.query.isActive === 'true';
-    if (req.query.parent) queryFilter.parent = req.query.parent;
+    if (req.query.parent !== undefined) {
+      // Handle null string - convert "null" string to actual null
+      if (req.query.parent === 'null' || req.query.parent === null) {
+        queryFilter.parent = null;
+      } else {
+        queryFilter.parent = req.query.parent;
+      }
+    }
 
     const total = await Category.countDocuments(queryFilter);
     
