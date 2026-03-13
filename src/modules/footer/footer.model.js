@@ -74,7 +74,7 @@ const footerConfigSchema = new mongoose.Schema({
     },
     copyright: {
       type: String,
-      default: `© Cavios® ${new Date().getFullYear()}. Designed for performance. Built to last.`
+      default: `© Cavios® ${new Date().getFullYear()}. Designed for performance.`
     }
   }
 }, {

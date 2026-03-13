@@ -23,7 +23,7 @@ exports.getFooterConfig = async (req, res) => {
             href: '',
             autoDetect: true
           },
-          copyright: `© Cavios® ${currentYear}. Designed for performance. Built to last.`
+          copyright: `© Cavios® ${currentYear}. Designed for performance.`
         }
       });
       await config.save();
@@ -82,7 +82,7 @@ exports.getFooterConfig = async (req, res) => {
             label: config.bottomSection?.termsAndConditions?.label || 'Terms & Conditions',
             href: termsAndConditionsUrl || config.bottomSection?.termsAndConditions?.href || ''
           },
-          copyright: (config.bottomSection?.copyright || `© Cavios® ${new Date().getFullYear()}. Designed for performance. Built to last.`).replace('{year}', new Date().getFullYear().toString())
+          copyright: (config.bottomSection?.copyright || `© Cavios® ${new Date().getFullYear()}. Designed for performance.`).replace('{year}', new Date().getFullYear().toString())
         }
       }
     });
@@ -117,7 +117,7 @@ exports.getFooterConfigAdmin = async (req, res) => {
             href: '',
             autoDetect: true
           },
-          copyright: `© Cavios® ${currentYear}. Designed for performance. Built to last.`
+          copyright: `© Cavios® ${currentYear}. Designed for performance.`
         }
       });
       await config.save();
@@ -183,7 +183,7 @@ exports.updateFooterConfig = async (req, res) => {
             href: '',
             autoDetect: true
           },
-          copyright: `© Cavios® ${currentYear}. Designed for performance. Built to last.`
+          copyright: `© Cavios® ${currentYear}. Designed for performance.`
         }
       });
     } else {
