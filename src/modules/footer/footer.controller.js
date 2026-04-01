@@ -60,7 +60,15 @@ exports.getFooterConfig = async (req, res) => {
         heading: col.heading,
         items: col.items
           .filter(item => item.isActive)
-          .sort((a, b) => a.order - b.order),
+          .sort((a, b) => a.order - b.order)
+          .map(item => ({
+            label: item.label,
+            href: item.href,
+            target: item.target,
+            order: item.order,
+            socialEnabled: item.socialEnabled,
+            socialType: item.socialType
+          })),
         order: col.order
       }))
       .sort((a, b) => a.order - b.order)

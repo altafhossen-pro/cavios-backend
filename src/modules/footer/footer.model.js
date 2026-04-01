@@ -31,6 +31,15 @@ const footerConfigSchema = new mongoose.Schema({
       isActive: {
         type: Boolean,
         default: true
+      },
+      socialEnabled: {
+        type: Boolean,
+        default: false
+      },
+      socialType: {
+        type: String,
+        enum: ['', 'facebook', 'youtube', 'instagram', 'twitter', 'linkedin', 'whatsapp', 'tiktok', 'pinterest', 'amazon'],
+        default: ''
       }
     }],
     order: {

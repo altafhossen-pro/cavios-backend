@@ -33,6 +33,7 @@ const blogCommentRoutes = require('../modules/blogComment/blogComment.route');
 const staticPageRoutes = require('../modules/staticPage/staticPage.route');
 const headerMenuRoutes = require('../modules/headerMenu/headerMenu.route');
 const footerRoutes = require('../modules/footer/footer.route');
+const newsletterRoutes = require('../modules/newsletter/newsletter.route');
 
 router.use('/user', userRoutes);
 router.use('/otp', otpRoutes);
@@ -66,6 +67,7 @@ router.use('/blog-comment', blogCommentRoutes);
 router.use('/static-page', staticPageRoutes);
 router.use('/header-menu', headerMenuRoutes);
 router.use('/footer', footerRoutes);
+router.use('/newsletter', newsletterRoutes);
 
 // Health check route
 router.get('/health', (req, res) => {
