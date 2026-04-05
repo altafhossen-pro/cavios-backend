@@ -11,6 +11,7 @@ router.get('/settings', newsletterController.getSettings);
 
 // --- Admin Routes ---
 router.get('/subscribers', verifyTokenAdmin, newsletterController.getSubscribers);
+router.delete('/subscribers/:id', verifyTokenAdmin, newsletterController.deleteSubscriber);
 router.get('/subscribers/export', verifyTokenAdmin, newsletterController.exportSubscribers);
 router.put('/settings', verifyTokenAdmin, newsletterController.updateSettings);
 

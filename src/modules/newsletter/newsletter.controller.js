@@ -122,6 +122,21 @@ exports.exportSubscribers = async (req, res) => {
   }
 };
 
+// Delete subscriber (Admin)
+exports.deleteSubscriber = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const subscriber = await Subscriber.findByIdAndDelete(id);
+    if (!subscriber) {
+      return sendResponse({ res, statusCode: 404, success: false, message: 'Subscriber not found' });
+    }
+    return sendResponse({ res, success: true, message: 'Subscriber deleted successfully' });
+  } catch (error) {
+    console.error('Delete subscriber error:', error);
+    return sendResponse({ res, statusCode: 500, success: false, message: error.message });
+  }
+};
+
 // --- Settings Handlers ---
 
 // Get newsletter settings (Public/Admin)
