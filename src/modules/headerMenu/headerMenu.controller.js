@@ -99,7 +99,7 @@ exports.getHeaderMenuConfig = async (req, res) => {
           menuItems.push({
             type: 'category',
             name: category.name,
-            href: `/shop?category=${category.slug}`,
+            href: `/collections/${category.slug}`,
             slug: category.slug,
             categoryId: category._id,
             order: orderValue,
